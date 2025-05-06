@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import cv2
 from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -11,7 +11,6 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 import tempfile
 import base64
 from io import BytesIO
-import cv2
 
 # Set page configuration
 st.set_page_config(
@@ -25,6 +24,20 @@ st.set_page_config(
 st.markdown(
     """
 <style>
+    /* For class .st-emotion-cache-13k62yr */
+    .st-emotion-cache-13k62yr {
+        color: #3b2c1e !important;  /* Coffee color for text */
+    }
+    .st-emotion-cache-ltfnpr{
+         color: #3b2c1e !important;  /* Coffee color for text */
+    }
+
+    /* For sidebar content with data-testid="stSidebarContent" */
+    [data-testid="stSidebarContent"] {
+        color: #ffffff !important;  /* White text color */
+    }
+
+    /* Custom styles for other elements (if needed) */
     .main {
         background-color: #f5f5f5;
     }
@@ -33,7 +46,7 @@ st.markdown(
         margin: 0 auto;
     }
     h1, h2, h3 {
-        color: #5c4033;
+        color: #855930;  /* Dark brown for better contrast */
     }
     .stTabs [data-baseweb="tab-list"] {
         gap: 24px;
@@ -41,60 +54,69 @@ st.markdown(
     .stTabs [data-baseweb="tab"] {
         height: 50px;
         white-space: pre-wrap;
-        background-color: #e6d2b5;
+        background-color: #bfa382;  /* Slightly lighter brown for tabs */
         border-radius: 4px 4px 0px 0px;
         gap: 1px;
         padding-top: 10px;
         padding-bottom: 10px;
+        color: #f5f5f5;  /* Light text color for better contrast with tab background */
     }
     .stTabs [aria-selected="true"] {
-        background-color: #5c4033;
-        color: white;
+        background-color: #6b4f31;  /* Darker brown for selected tab */
+        color: #f5f5f5;  /* Light text color when selected */
+    }
+    .stTabs [aria-selected="false"] {
+        background-color: #bfa382;  /* Lighter brown for unselected tab */
+        color: #5c4033;  /* Darker text for unselected tabs */
     }
     .upload-section {
-        background-color: #fff;
+        background-color: #ffffff;
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }
     .result-section {
-        background-color: #fff;
+        background-color: #a57c5a;  /* Rich brown for result section */
+        color: white;
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .defect-card {
-        background-color: #fff;
+        background-color: #ffffff;
         border-radius: 10px;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         padding: 15px;
         margin-bottom: 15px;
         transition: transform 0.3s;
+        color: #3b2c1e;  /* Dark brown text */
     }
     .defect-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     .info-box {
-        background-color: #f8f9fa;
-        border-left: 5px solid #5c4033;
+        background-color: #e2ded5;  /* Light gray background for info box */
+        border-left: 5px solid #6b4f31;  /* Dark brown border for contrast */
         padding: 10px 15px;
         margin: 10px 0;
         border-radius: 0 5px 5px 0;
+        color: #3b2c1e;  /* Dark brown text */
     }
     .sidebar .sidebar-content {
-        background-color: #f0e6d2;
+        background-color: #f0e6d2;  /* Soft beige for sidebar */
+        color: #3b2c1e;  /* Dark brown text */
     }
     .stButton>button {
-        background-color: #5c4033;
+        background-color: #6b4f31;  /* Darker brown for buttons */
         color: white;
         border-radius: 5px;
         border: none;
         padding: 8px 16px;
     }
     .stButton>button:hover {
-        background-color: #7d5a4d;
+        background-color: #7d5a4d;  /* Slightly lighter brown for hover state */
     }
     .image-container {
         display: flex;
@@ -114,6 +136,9 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+
+
 
 # Disable TensorFlow warnings
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -309,13 +334,6 @@ def fig_to_base64(fig):
 
 # Define coffee defect information
 coffee_defects = {
-    "Black": {
-        "description": "Black beans are defects characterized by their dark or black color. These typically result from over-fermentation, disease, or damage during processing.",
-        "causes": "Over-fermentation, fungal infection, or improper drying.",
-        "impact": "Creates bitter, unpleasant tastes in coffee with burnt or fermented flavors.",
-        "prevention": "Ensure proper fermentation time, maintain cleanliness during processing, and adequate drying.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t1.jpg",
-    },
     "Broken": {
         "description": "Broken beans are coffee beans that have been fractured or broken during processing, typically during hulling or handling.",
         "causes": "Aggressive mechanical processing, improper adjustment of equipment, or low moisture content before hulling.",
@@ -323,89 +341,54 @@ coffee_defects = {
         "prevention": "Proper adjustment of processing equipment and maintaining optimal moisture content.",
         "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t2.jpg",
     },
-    "Faded": {
+    "Cut": {
+        "description": "Cut beans are beans that have been physically damaged or torn, which impacts their visual appearance and quality.",
+        "causes": "Improper handling or mechanical damage during processing.",
+        "impact": "Inconsistent roasting, and it can negatively affect the flavor profile of the coffee.",
+        "prevention": "Proper handling and calibration of processing equipment.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t2.jpg",
+    },
+    "Dry Cherry": {
+        "description": "Dry cherry beans are coffee beans that have not been adequately processed and dried, resulting in beans that have high moisture content.",
+        "causes": "Inadequate drying procedures or exposure to excess moisture during processing.",
+        "impact": "May result in mold growth or uneven roasting.",
+        "prevention": "Ensure beans are properly dried to the correct moisture content.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t12.jpg",
+    },
+    "Fade": {
         "description": "Faded beans appear whitish or pale in color instead of the normal greenish tint of unroasted coffee.",
         "causes": "Age, exposure to moisture after drying, or prolonged storage in unsuitable conditions.",
         "impact": "Flat, papery, or aged flavors in the cup due to oxidation and loss of flavor compounds.",
         "prevention": "Proper storage in cool, dry conditions with appropriate packaging.",
         "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t3.jpg",
     },
-    "Immature": {
-        "description": "Immature beans come from coffee cherries harvested before they reach full ripeness, resulting in underdeveloped beans.",
-        "causes": "Harvesting unripe cherries or severe drought affecting cherry development.",
-        "impact": "Harsh, astringent flavors with heightened acidity and lack of sweetness.",
-        "prevention": "Selective harvesting of only ripe cherries and proper sorting.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t4.jpg",
+    "Floater": {
+        "description": "Floater beans are beans that float when placed in water, indicating they have a lower density and are often underdeveloped or damaged.",
+        "causes": "Immature cherries or poor processing conditions.",
+        "impact": "Can cause uneven roasting, affecting overall flavor quality.",
+        "prevention": "Selective harvesting of ripe cherries and proper processing techniques.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t3.jpg",
     },
-    "Insect_Damage": {
-        "description": "These are beans with visible holes or damage caused by insects, most commonly the coffee berry borer.",
-        "causes": "Infestation by coffee berry borers, coffee leaf miners, or other insects.",
-        "impact": "Insect-damaged beans can contribute musty or fermented flavors to coffee.",
-        "prevention": "Integrated pest management practices, prompt harvesting, and proper storage.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t5.jpg",
+    "Full Black": {
+        "description": "Full black beans are coffee beans that are black in color, typically resulting from over-fermentation, disease, or improper drying.",
+        "causes": "Over-fermentation, fungal infection, or improper drying.",
+        "impact": "Creates bitter, unpleasant tastes in coffee with burnt or fermented flavors.",
+        "prevention": "Ensure proper fermentation time, maintain cleanliness during processing, and adequate drying.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t1.jpg",
     },
-    "Mold": {
-        "description": "Moldy beans have visible mold growth on their surface, typically appearing as white, blue, or green patches.",
-        "causes": "High moisture during storage, inadequate drying, or re-wetting of beans.",
-        "impact": "Creates musty, moldy flavors and can contribute mycotoxins that are harmful to health.",
-        "prevention": "Proper drying to appropriate moisture levels and storage in dry conditions.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t6.jpg",
+    "Full Sour": {
+        "description": "Full sour beans are those that have a sour or fermented odor, often resulting from improper fermentation processes.",
+        "causes": "Improper fermentation or over-fermentation.",
+        "impact": "Produces sour, unpleasant flavors in the cup.",
+        "prevention": "Proper fermentation methods and monitoring of fermentation times.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t2.jpg",
     },
-    "Normal": {
-        "description": "Normal beans have no defects and meet all quality standards for specialty coffee.",
-        "causes": "Proper growing conditions, harvesting at peak ripeness, and careful processing.",
-        "impact": "Provides the expected flavor profile for the coffee variety and origin.",
-        "prevention": "Maintain good agricultural and processing practices.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t7.jpg",
-    },
-    "Parchment": {
-        "description": "Parchment refers to beans where the silver skin or parchment layer has not been completely removed during processing.",
-        "causes": "Insufficient hulling or mechanical processing issues.",
-        "impact": "Can create an inconsistent roast and potentially chaffy flavors in the cup.",
-        "prevention": "Proper adjustment and maintenance of hulling equipment.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t8.jpg",
-    },
-    "Sievings": {
-        "description": "Sievings are very small, undersized beans that should have been removed during screening.",
-        "causes": "Improper screening or grading of coffee beans.",
-        "impact": "Can lead to uneven roasting and extraction, affecting overall cup quality.",
-        "prevention": "Proper size grading and removal of undersized beans.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t9.jpg",
-    },
-    "Silverskin": {
-        "description": "Beans with silver skin still attached, which is a thin membrane that covers the bean inside the parchment layer.",
-        "causes": "Incomplete removal during processing or polishing.",
-        "impact": "Minimal impact on flavor but may affect visual quality and consistency of roast.",
-        "prevention": "Proper polishing during processing.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t10.jpg",
-    },
-    "Withered": {
-        "description": "Withered beans appear shriveled and smaller than normal due to inadequate development.",
-        "causes": "Drought conditions, plant stress, or nutrient deficiencies during cherry development.",
-        "impact": "Can contribute astringent or woody flavors to the cup.",
-        "prevention": "Proper irrigation, fertilization, and shade management in coffee cultivation.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t11.jpg",
-    },
-    "Brown": {
-        "description": "Brown beans have a color ranging from light to dark brown instead of the typical greenish color of unroasted coffee.",
-        "causes": "Age, improper drying, or exposure to high humidity after drying.",
-        "impact": "Tends to produce stale, woody, or papery flavors in the cup.",
-        "prevention": "Proper drying practices and storage conditions.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t12.jpg",
-    },
-    "Fungus_Damage": {
+    "Fungus Damage": {
         "description": "Beans with visible damage from fungal growth, often appearing as discolored patches or spots.",
         "causes": "Fungal infection during cultivation, processing, or storage.",
         "impact": "Can produce moldy, fermented, or phenolic flavors.",
         "prevention": "Fungicide application when necessary, proper drying, and storage.",
         "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t13.jpg",
-    },
-    "Foreign_Matter": {
-        "description": "Any non-coffee material found mixed with coffee beans, such as sticks, stones, or other debris.",
-        "causes": "Inadequate cleaning and sorting during processing.",
-        "impact": "Potential equipment damage and contamination of the batch.",
-        "prevention": "Proper cleaning, sorting, and quality control measures.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t14.jpg",
     },
     "Husk": {
         "description": "Fragments of the outer skin of the coffee cherry that have not been removed during processing.",
@@ -414,19 +397,61 @@ coffee_defects = {
         "prevention": "Proper pulping equipment maintenance and calibration.",
         "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t15.jpg",
     },
-    "Shells": {
+    "Immature": {
+        "description": "Immature beans come from coffee cherries harvested before they reach full ripeness, resulting in underdeveloped beans.",
+        "causes": "Harvesting unripe cherries or severe drought affecting cherry development.",
+        "impact": "Harsh, astringent flavors with heightened acidity and lack of sweetness.",
+        "prevention": "Selective harvesting of only ripe cherries and proper sorting.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t4.jpg",
+    },
+    "Parchment": {
+        "description": "Parchment refers to beans where the silver skin or parchment layer has not been completely removed during processing.",
+        "causes": "Insufficient hulling or mechanical processing issues.",
+        "impact": "Can create an inconsistent roast and potentially chaffy flavors in the cup.",
+        "prevention": "Proper adjustment and maintenance of hulling equipment.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t8.jpg",
+    },
+    "Partial Black": {
+        "description": "Partial black beans are beans that have some blackened areas due to over-fermentation or disease.",
+        "causes": "Over-fermentation, fungal infection, or improper drying.",
+        "impact": "May result in burnt, bitter flavors in the coffee.",
+        "prevention": "Ensure proper drying and processing conditions.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t1.jpg",
+    },
+    "Partial Sour": {
+        "description": "Partial sour beans have a slightly sour or fermented odor, often resulting from inadequate fermentation.",
+        "causes": "Improper fermentation or incomplete processing.",
+        "impact": "Can lead to off-flavors such as sourness in the cup.",
+        "prevention": "Ensure proper fermentation and processing methods.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t2.jpg",
+    },
+    "Severe Insect Damage": {
+        "description": "Beans with severe insect damage, often characterized by large visible holes or significant degradation.",
+        "causes": "Infestation by coffee berry borers or other pests.",
+        "impact": "Insect-damaged beans contribute musty or fermented flavors to the cup.",
+        "prevention": "Integrated pest management practices, prompt harvesting, and proper storage.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t5.jpg",
+    },
+    "Shell": {
         "description": "Shell-shaped beans resulting from the development of only one side of the coffee seed.",
         "causes": "Genetic factors or abnormal development of the coffee cherry.",
         "impact": "May cause uneven roasting, affecting cup consistency.",
         "prevention": "Cannot be fully prevented as it's partly genetic, but proper growing conditions help.",
         "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t16.jpg",
     },
-    "Stinker": {
-        "description": "Beans with a distinctly foul odor, often due to anaerobic fermentation during processing.",
-        "causes": "Over-fermentation or improper processing methods.",
-        "impact": "Creates highly unpleasant, often sour or rotten flavors in the cup.",
-        "prevention": "Proper fermentation time and conditions, clean water for washing.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t17.jpg",
+    "Slight Insect Damage": {
+        "description": "Beans with minor insect damage, usually small holes or slight degradation.",
+        "causes": "Light infestation by pests like coffee berry borers.",
+        "impact": "May lead to slight off-flavors in the coffee.",
+        "prevention": "Pest control and proper processing.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t5.jpg",
+    },
+    "Withered": {
+        "description": "Withered beans appear shriveled and smaller than normal due to inadequate development.",
+        "causes": "Drought conditions, plant stress, or nutrient deficiencies during cherry development.",
+        "impact": "Can contribute astringent or woody flavors to the cup.",
+        "prevention": "Proper irrigation, fertilization, and shade management in coffee cultivation.",
+        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t11.jpg",
     },
 }
 
@@ -452,7 +477,7 @@ with tab1:
     st.header("Analyze Your Coffee Beans")
 
     # File uploader
-    st.markdown('<div class="upload-section">', unsafe_allow_html=True)
+    # st.markdown('<div class="upload-section">', unsafe_allow_html=True)
     st.subheader("Upload an Image")
     uploaded_file = st.file_uploader(
         "Choose a coffee bean image...", type=["jpg", "jpeg", "png"]
@@ -477,27 +502,26 @@ with tab1:
         )
 
     # Class names (sorted alphabetically to match model's expectations)
-    class_names = sorted(
-        [
-            "Black",
-            "Broken",
-            "Brown",
-            "Faded",
-            "Foreign_Matter",
-            "Fungus_Damage",
-            "Husk",
-            "Immature",
-            "Insect_Damage",
-            "Mold",
-            "Normal",
-            "Parchment",
-            "Shells",
-            "Sievings",
-            "Silverskin",
-            "Stinker",
-            "Withered",
-        ]
-    )
+    class_names = sorted([
+        "Broken",
+        "Cut",
+        "Dry Cherry",
+        "Fade",
+        "Floater",
+        "Full Black",
+        "Full Sour",
+        "Fungus Damage",
+        "Husk",
+        "Immature",
+        "Parchment",
+        "Partial Black",
+        "Partial Sour",
+        "Severe Insect Damage",
+        "Shell",
+        "Slight Insect Damage",
+        "Withered"
+    ])
+
 
     if uploaded_file is not None and model_exists:
         st.markdown('<div class="result-section">', unsafe_allow_html=True)
