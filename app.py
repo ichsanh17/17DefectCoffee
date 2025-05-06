@@ -536,7 +536,7 @@ with tab1:
 
             # Display the original image
             st.subheader("Uploaded Image")
-            st.image(image, caption="Original Image", use_column_width=True)
+            st.image(image, caption="Original Image", use_container_width=True)
 
             # Load model
             interpreter, input_details, output_details = load_tflite_model(model_path)
@@ -587,7 +587,7 @@ with tab1:
             col1, col2, col3 = st.columns(3)
 
             with col1:
-                st.image(original_img, caption="Original", use_column_width=True)
+                st.image(original_img, caption="Original", use_container_width=True)
 
             with col2:
                 # Display the heatmap with colormap
@@ -599,7 +599,7 @@ with tab1:
                 st.pyplot(fig)
 
             with col3:
-                st.image(superimposed_img, caption="Overlay", use_column_width=True)
+                st.image(superimposed_img, caption="Overlay", use_container_width=True)
 
             # Explanation of the visualization
             st.markdown(
@@ -651,7 +651,7 @@ with tab2:
                 st.image(
                     defect_info["example_image"],
                     caption=f"{defect_name.replace('_', ' ')} Example",
-                    use_column_width=True,
+                    use_container_width=True,
                 )
             except:
                 st.info("Example image not available")
@@ -710,7 +710,7 @@ with tab3:
     st.image(
         "https://miro.medium.com/max/1400/1*6gdpKnDRRHDN9YonVCrjjw.jpeg",
         caption="Example of Grad-CAM visualization (Source: Medium.com)",
-        use_column_width=True,
+        use_container_width=True,
     )
 
 # Add footer
