@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import cv2
+
 from PIL import Image
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -11,6 +11,7 @@ from tensorflow.keras.applications.efficientnet import preprocess_input
 import tempfile
 import base64
 from io import BytesIO
+import cv2
 
 # Set page configuration
 st.set_page_config(
