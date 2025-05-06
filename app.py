@@ -32,7 +32,7 @@ st.markdown(
          color: #3b2c1e !important;  /* Coffee color for text */
     }
     .st-emotion-cache-r90ti5{
-        background-color: #0e1117;
+        background-color: #6b4f31;
     }
 
     /* For sidebar content with data-testid="stSidebarContent" */
