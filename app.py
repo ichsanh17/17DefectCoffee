@@ -51,14 +51,12 @@ st.markdown(
         color: #ffffff !important;  /* White text color */
     }
 
-    .block-container{
-    
-        padding-top: 50px;
-        padding-bottom: 50px;
-        padding-left: 50px;
-        padding-right: 50px;
-
-    }
+    # .block-container{
+    #     padding-top: 50px;
+    #     padding-bottom: 50px;
+    #     padding-left: 50px;
+    #     padding-right: 50px;
+    # }
 
     /* Custom styles for other elements (if needed) */
     .main {
