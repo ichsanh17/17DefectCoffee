@@ -165,8 +165,6 @@ st.markdown(
 )
 
 
-
-
 # Disable TensorFlow warnings
 tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -366,7 +364,7 @@ coffee_defects = {
         "causes": "Aggressive mechanical processing, improper adjustment of equipment, or low moisture content before hulling.",
         "impact": "May result in inconsistent roasting and flavor development or more rapid staling.",
         "prevention": "Proper adjustment of processing equipment and maintaining optimal moisture content.",
-        "example_image": "https://www.coffeeinstitute.org/wp-content/uploads/2016/03/t2.jpg",
+        "example_image": "example/Broken_01.jpg",
     },
     "Cut": {
         "description": "Cut beans are beans that have been physically damaged or torn, which impacts their visual appearance and quality.",
@@ -529,26 +527,27 @@ with tab1:
         )
 
     # Class names (sorted alphabetically to match model's expectations)
-    class_names = sorted([
-        "Broken",
-        "Cut",
-        "Dry Cherry",
-        "Fade",
-        "Floater",
-        "Full Black",
-        "Full Sour",
-        "Fungus Damage",
-        "Husk",
-        "Immature",
-        "Parchment",
-        "Partial Black",
-        "Partial Sour",
-        "Severe Insect Damage",
-        "Shell",
-        "Slight Insect Damage",
-        "Withered"
-    ])
-
+    class_names = sorted(
+        [
+            "Broken",
+            "Cut",
+            "Dry Cherry",
+            "Fade",
+            "Floater",
+            "Full Black",
+            "Full Sour",
+            "Fungus Damage",
+            "Husk",
+            "Immature",
+            "Parchment",
+            "Partial Black",
+            "Partial Sour",
+            "Severe Insect Damage",
+            "Shell",
+            "Slight Insect Damage",
+            "Withered",
+        ]
+    )
 
     if uploaded_file is not None and model_exists:
         st.markdown('<div class="result-section">', unsafe_allow_html=True)
@@ -560,19 +559,21 @@ with tab1:
 
             # Create a 3-column layout
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 # Display the original image
                 st.subheader("Uploaded Image")
                 st.image(image, caption="Original Image", use_container_width=True)
-            
+
             with col2:
                 # Load model
-                interpreter, input_details, output_details = load_tflite_model(model_path)
-            
+                interpreter, input_details, output_details = load_tflite_model(
+                    model_path
+                )
+
                 # Preprocess image for model
                 preprocessed_img = preprocess_image(image)
-            
+
                 # Get prediction
                 predictions = predict_with_tflite(
                     interpreter, input_details, output_details, preprocessed_img
@@ -580,24 +581,24 @@ with tab1:
                 pred_idx = np.argmax(predictions[0])
                 pred_class = class_names[pred_idx]
                 confidence = predictions[0][pred_idx] * 100
-            
+
                 # Display prediction
                 st.subheader("Analysis Result")
                 st.write(f"**Detected Defect:** {pred_class.replace('_', ' ')}")
                 st.write(f"**Confidence:** {confidence:.2f}%")
-            
-            
+
                 # Get defect information
                 if pred_class in coffee_defects:
                     defect_info = coffee_defects[pred_class]
-            
+
                     # Create expandable section for defect details
                     with st.expander("See defect details", expanded=True):
                         st.markdown(f"**Description:** {defect_info['description']}")
                         st.markdown(f"**Causes:** {defect_info['causes']}")
-                        st.markdown(f"**Impact on Coffee Quality:** {defect_info['impact']}")
+                        st.markdown(
+                            f"**Impact on Coffee Quality:** {defect_info['impact']}"
+                        )
                         st.markdown(f"**Prevention:** {defect_info['prevention']}")
-
 
             # # Display the original image
             # st.subheader("Uploaded Image")
