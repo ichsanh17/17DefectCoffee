@@ -709,7 +709,7 @@ with tab2:
     for i, (defect_name, defect_info) in enumerate(filtered_defects.items()):
         # Alternate between columns
         with col1 if i % 2 == 0 else col2:
-            st.markdown(f'<div class="defect-card">', unsafe_allow_html=True)
+            # st.markdown(f'<div class="defect-card">', unsafe_allow_html=True)
             st.subheader(defect_name.replace("_", " "))
 
             # Use a placeholder image if the example_image is not available
