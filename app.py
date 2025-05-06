@@ -545,41 +545,82 @@ with tab1:
             # Load and preprocess image
             image = Image.open(uploaded_file).convert("RGB")
 
-            # Display the original image
-            st.subheader("Uploaded Image")
-            st.image(image, caption="Original Image", use_container_width=True)
+            # Create a 3-column layout
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # Display the original image
+                st.subheader("Uploaded Image")
+                st.image(image, caption="Original Image", use_container_width=True)
+            
+            with col2:
+                # Load model
+                interpreter, input_details, output_details = load_tflite_model(model_path)
+            
+                # Preprocess image for model
+                preprocessed_img = preprocess_image(image)
+            
+                # Get prediction
+                predictions = predict_with_tflite(
+                    interpreter, input_details, output_details, preprocessed_img
+                )
+                pred_idx = np.argmax(predictions[0])
+                pred_class = class_names[pred_idx]
+                confidence = predictions[0][pred_idx] * 100
+            
+                # Display prediction
+                st.subheader("Analysis Result")
+                st.write(f"**Detected Defect:** {pred_class.replace('_', ' ')}")
+                st.write(f"**Confidence:** {confidence:.2f}%")
+            
+            
+                # Get defect information
+                if pred_class in coffee_defects:
+                    defect_info = coffee_defects[pred_class]
+            
+                    # Create expandable section for defect details
+                    with st.expander("See defect details", expanded=True):
+                        st.markdown(f"**Description:** {defect_info['description']}")
+                        st.markdown(f"**Causes:** {defect_info['causes']}")
+                        st.markdown(f"**Impact on Coffee Quality:** {defect_info['impact']}")
+                        st.markdown(f"**Prevention:** {defect_info['prevention']}")
 
-            # Load model
-            interpreter, input_details, output_details = load_tflite_model(model_path)
 
-            # Preprocess image for model
-            preprocessed_img = preprocess_image(image)
+            # # Display the original image
+            # st.subheader("Uploaded Image")
+            # st.image(image, caption="Original Image", use_container_width=True)
 
-            # Get prediction
-            predictions = predict_with_tflite(
-                interpreter, input_details, output_details, preprocessed_img
-            )
-            pred_idx = np.argmax(predictions[0])
-            pred_class = class_names[pred_idx]
-            confidence = predictions[0][pred_idx] * 100
+            # # Load model
+            # interpreter, input_details, output_details = load_tflite_model(model_path)
 
-            # Display prediction
-            st.subheader("Analysis Result")
-            st.write(f"**Detected Defect:** {pred_class.replace('_', ' ')}")
-            st.write(f"**Confidence:** {confidence:.2f}%")
+            # # Preprocess image for model
+            # preprocessed_img = preprocess_image(image)
 
-            # Get defect information
-            if pred_class in coffee_defects:
-                defect_info = coffee_defects[pred_class]
+            # # Get prediction
+            # predictions = predict_with_tflite(
+            #     interpreter, input_details, output_details, preprocessed_img
+            # )
+            # pred_idx = np.argmax(predictions[0])
+            # pred_class = class_names[pred_idx]
+            # confidence = predictions[0][pred_idx] * 100
 
-                # Create expandable section for defect details
-                with st.expander("See defect details", expanded=True):
-                    st.markdown(f"**Description:** {defect_info['description']}")
-                    st.markdown(f"**Causes:** {defect_info['causes']}")
-                    st.markdown(
-                        f"**Impact on Coffee Quality:** {defect_info['impact']}"
-                    )
-                    st.markdown(f"**Prevention:** {defect_info['prevention']}")
+            # # Display prediction
+            # st.subheader("Analysis Result")
+            # st.write(f"**Detected Defect:** {pred_class.replace('_', ' ')}")
+            # st.write(f"**Confidence:** {confidence:.2f}%")
+
+            # # Get defect information
+            # if pred_class in coffee_defects:
+            #     defect_info = coffee_defects[pred_class]
+
+            #     # Create expandable section for defect details
+            #     with st.expander("See defect details", expanded=True):
+            #         st.markdown(f"**Description:** {defect_info['description']}")
+            #         st.markdown(f"**Causes:** {defect_info['causes']}")
+            #         st.markdown(
+            #             f"**Impact on Coffee Quality:** {defect_info['impact']}"
+            #         )
+            #         st.markdown(f"**Prevention:** {defect_info['prevention']}")
 
             # Generate Grad-CAM visualization
             st.subheader("AI Focus Areas (Grad-CAM)")
