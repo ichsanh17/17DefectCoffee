@@ -34,6 +34,12 @@ st.markdown(
     .st-emotion-cache-r90ti5{
         background-color: #6b4f31;
     }
+    .block-container {
+        padding-top: 50px !important;
+        padding-bottom: 50px !important;
+        padding-left: 50px !important;
+        padding-right: 50px !important;
+    }
 
     /* If the user prefers dark theme, change text color to white */
     @media (prefers-color-scheme: dark) {
