@@ -35,6 +35,17 @@ st.markdown(
         background-color: #6b4f31;
     }
 
+    /* If the user prefers dark theme, change text color to white */
+    @media (prefers-color-scheme: dark) {
+        .st-emotion-cache-13k62yr,
+        .st-emotion-cache-ltfnpr {
+            color: #ffffff !important;  /* White color for dark mode */
+        }
+
+        .st-emotion-cache-r90ti5 {
+            background-color: #333333;  /* Darker background for dark mode */
+        }
+
     /* For sidebar content with data-testid="stSidebarContent" */
     [data-testid="stSidebarContent"] {
         color: #ffffff !important;  /* White text color */
