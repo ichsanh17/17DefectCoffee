@@ -455,7 +455,7 @@ coffee_defects = {
         "causes": "Infestation by coffee berry borers or other pests.",
         "impact": "Insect-damaged beans contribute musty or fermented flavors to the cup.",
         "prevention": "Integrated pest management practices, prompt harvesting, and proper storage.",
-        "example_image": "example/Severe Insect Damage_01.jpg",
+        "example_image": "example/Severe Insect Damange_01.jpg",
     },
     "Shell": {
         "description": "Shell-shaped beans resulting from the development of only one side of the coffee seed.",
